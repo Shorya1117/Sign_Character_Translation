@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sign Language Translator</title>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #1e1e2f; color: white; display: flex; flex-direction: column; align-items: center; padding: 20px; }
+        .container { display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; margin-top: 20px; }
+        .video-box, .text-box { background: #2a2a40; padding: 15px; border-radius: 12px; box-shadow: 0 4px 15px rgba(0,0,0,0.3); }
+        video { border-radius: 8px; width: 100%; max-width: 400px; background: #000; transform: scaleX(-1); }
+        button { background: #00e5ff; color: #000; border: none; padding: 12px 24px; font-size: 16px; font-weight: bold; border-radius: 8px; cursor: pointer; transition: 0.3s; margin-bottom: 10px; }
+        button:hover { background: #00b3cc; }
+        textarea { width: 100%; max-width: 400px; height: 150px; background: #1e1e2f; color: #00e5ff; border: 2px solid #00e5ff; border-radius: 8px; padding: 10px; font-size: 24px; resize: none; font-weight: bold; letter-spacing: 2px; }
+        .status { margin-top: 10px; font-size: 14px; color: #aaa; }
+        .current-pred { font-size: 18px; color: #ff4757; font-weight: bold; margin-top: 5px; }
+    </style>
+</head>
+<body>
+
+    <h1>👋 Sign Language Translator</h1>
+    <button id="startBtn">Open Camera & Start</button>
+
+    <div class="container">
+        <div class="video-box">
+            <video id="video" autoplay playsinline></video>
+            <div class="status" id="status">Camera off</div>
+            <div class="current-pred" id="currentPred">Current Sign: -</div>
+        </div>
+        
+        <div class="text-box">
+            <h3>Translated Text:</h3>
+            <textarea id="messageBox" readonly placeholder="Start signing..."></textarea>
+            <button id="clearBtn" style="margin-top: 10px; width: 100%; background: #ff4757; color: white;">Clear Text</button>
+        </div>
+    </div>
+
+    <canvas id="canvas" style="display:none;"></canvas>
+
+    <script>
+        const video = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const ctx = canvas.getContext('2d');
+        const startBtn = document.getElementById('startBtn');
+        const messageBox = document.getElementById('messageBox');
+        const statusTxt = document.getElementById('status');
+        const currentPred = document.getElementById('currentPred');
+        const clearBtn = document.getElementById('clearBtn');
+        
+        let isPredicting = false;
+        let lastPredictedChar = '';
+        let predictionInterval;
+
+        // Start/Stop Camera
+        startBtn.addEventListener('click', async () => {
+            if (!isPredicting) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+                    video.srcObject = stream;
+                    statusTxt.innerText = "Camera active. Predicting...";
+                    statusTxt.style.color = "#00e5ff";
+                    startBtn.innerText = "Stop Camera";
+                    isPredicting = true;
+                    
+                    // Har 600ms me frame bhejo (taki model pe load na aaye)
+                    predictionInterval = setInterval(sendFrame, 600);
+                } catch (err) {
+                    alert("Camera access denied or not found!");
+                }
+            } else {
+                const stream = video.srcObject;
+                if(stream) {
+                    const tracks = stream.getTracks();
+                    tracks.forEach(track => track.stop());
+                }
+                video.srcObject = null;
+                clearInterval(predictionInterval);
+                isPredicting = false;
+                startBtn.innerText = "Open Camera & Start";
+                statusTxt.innerText = "Camera off";
+                statusTxt.style.color = "#aaa";
+                currentPred.innerText = "Current Sign: -";
+                lastPredictedChar = '';
+            }
+        });
+
+        // Frame bhejna aur prediction process karna
+        async function sendFrame() {
+            if(video.videoWidth === 0) return;
+            
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+
+            try {
+                const response = await fetch('/predict', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ image: dataURL })
+                });
+                
+                const result = await response.json();
+                if(result.success) {
+                    const char = result.prediction;
+                    currentPred.innerText = `Current Sign: ${char.toUpperCase()}`;
+                    
+                    // Logic to handle special characters and avoid spamming the same letter
+                    if(char !== lastPredictedChar) {
+                        if (char === 'space') {
+                            messageBox.value += ' ';
+                        } else if (char === 'del') {
+                            messageBox.value = messageBox.value.slice(0, -1);
+                        } else if (char !== 'nothing' && char !== '') {
+                            messageBox.value += char;
+                        }
+                        lastPredictedChar = char;
+                    }
+                }
+            } catch (err) {
+                console.error("Prediction error", err);
+            }
+        }
+
+        clearBtn.addEventListener('click', () => {
+            messageBox.value = '';
+            lastPredictedChar = '';
+        });
+    </script>
+</body>
+</html>
