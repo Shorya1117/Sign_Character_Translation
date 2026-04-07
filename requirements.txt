@@ -1,6 +1,6 @@
 numpy
 opencv-python-headless
-mediapipe
+mediapipe==0.9.3.0
 torch
 torchvision
 tqdm
