@@ -1,276 +1,235 @@
-# ASL Sign Language Recognition Project
+# 🤟 Sign Language Recognition System
 
-This project implements a **real-time Sign Language Recognition system** using **MediaPipe Hand Landmarks**, **OpenCV**, and a **PyTorch-based MLP model**. The system can take input from a **laptop webcam or mobile phone camera (via DroidCam)** and predict sign language gestures in real time.
-
----
-
-## 1. Project Overview
-
-### What this project does
-
-* Detects hands in real time using **MediaPipe**
-* Extracts **21 hand landmarks**
-* Feeds landmarks into a **trained neural network (Static MLP)**
-* Predicts the corresponding **sign language gesture**
-* Displays prediction live on the camera feed
-
-### Why this approach
-
-* No GPU required
-* Works on low-end laptops (CPU only)
-* Faster than image-based CNN models
-* Suitable for real-time applications
+> Real-time ASL gesture recognition using MediaPipe, OpenCV, and PyTorch — no GPU required.
 
 ---
 
-## 2. Technologies Used
+## 📌 Table of Contents
 
-* **Python 3.10**
-* **MediaPipe** – Hand landmark detection
-* **OpenCV** – Camera handling & visualization
-* **PyTorch** – Model training and inference
-* **NumPy** – Numerical processing
-* **DroidCam** – Mobile phone as webcam (optional)
+- [Overview](#overview)
+- [Features](#features)
+- [Tech Stack](#tech-stack)
+- [System Requirements](#system-requirements)
+- [Project Structure](#project-structure)
+- [Setup & Installation](#setup--installation)
+- [Training the Model](#training-the-model)
+- [Running the App](#running-the-app)
+- [Using Mobile Camera (DroidCam)](#using-mobile-camera-droidcam)
+- [Deployment Options](#deployment-options)
+- [Troubleshooting](#troubleshooting)
+- [Authors](#authors)
 
 ---
 
-## 3. System Requirements
+## Overview
+
+This project implements a **real-time Sign Language Recognition system** that detects hand gestures via webcam and predicts the corresponding ASL sign using a lightweight neural network. It is designed to run entirely on CPU, making it accessible on standard laptops without any dedicated GPU.
+
+---
+
+## Features
+
+- 🖐️ Real-time hand detection using **MediaPipe** (21 landmarks)
+- 🧠 Gesture prediction via a trained **MLP neural network** (PyTorch)
+- 📷 Supports **laptop webcam** or **Android phone camera** (via DroidCam)
+- 💻 Fully **offline** — no internet connection required at runtime
+- ⚡ Fast inference on **CPU only**
+
+---
+
+## Tech Stack
+
+| Tool | Purpose |
+|------|---------|
+| Python 3.10 | Core language |
+| MediaPipe | Hand landmark detection |
+| OpenCV | Camera handling & frame visualization |
+| PyTorch | Model training and inference |
+| NumPy | Numerical processing |
+| DroidCam *(optional)* | Use Android phone as a webcam |
+
+---
+
+## System Requirements
 
 ### Hardware
-
-* Laptop / PC (Windows)
-* Webcam OR Android phone (for DroidCam)
-* Minimum 8 GB RAM recommended
+- Laptop or PC (Windows 10/11)
+- Webcam **or** Android phone (for DroidCam)
+- Minimum **8 GB RAM** recommended
 
 ### Software
+- Windows 10 or 11
+- Python **3.10.x** *(version-sensitive)*
+- VS Code or PowerShell
 
-* Windows 10/11
-* Python 3.10.x (important)
-* VS Code / PowerShell
-
-> ⚠️ GPU is **NOT required**. Intel HD Graphics is sufficient.
+> ⚠️ A dedicated GPU is **not required**. Intel HD Graphics is sufficient.
 
 ---
 
-## 4. Project Folder Structure
+## Project Structure
 
 ```
 asl_project/
 │
 ├── scripts/
-│   ├── infer_realtime.py      # Real-time inference
-│   ├── train_static.py        # Model training
-│   ├── models.py              # MLP model definition
+│   ├── infer_realtime.py      # Real-time inference script
+│   ├── train_static.py        # Model training script
+│   ├── models.py              # MLP model architecture
 │   ├── dataset.py             # Dataset loader
 │   └── __init__.py
 │
 ├── dataset/
-│   ├── landmarks/             # Saved landmark .npy files
+│   └── landmarks/             # Saved landmark .npy files per class
 │
 ├── models/
-│   └── static_mlp.pt           # Trained model
+│   └── static_mlp.pt          # Trained model weights
 │
-├── venv/                      # Virtual environment
+├── venv/                      # Python virtual environment
 ├── requirements.txt
 └── README.md
 ```
 
 ---
 
-## 5. Python Environment Setup (From Basics)
+## Setup & Installation
 
-### Step 1: Install Python 3.10
+### Step 1 — Install Python 3.10
 
-Download from:
-[https://www.python.org/downloads/release/python-31011/](https://www.python.org/downloads/release/python-31011/)
+Download from the official site:  
+🔗 https://www.python.org/downloads/release/python-31011/
 
-During installation:
+During installation, make sure to check:  
+✅ **Add Python to PATH**
 
-* ✅ Check **Add Python to PATH**
-
-Verify installation:
-
-```
+Verify the installation:
+```bash
 python --version
 ```
 
 ---
 
-### Step 2: Create Virtual Environment
+### Step 2 — Create a Virtual Environment
 
-From project root:
-
-```
+From the project root directory:
+```bash
 python -m venv venv
 ```
 
 Activate it:
-
-```
+```bash
 venv\Scripts\activate
 ```
 
 ---
 
-### Step 3: Install Dependencies
+### Step 3 — Install Dependencies
 
-```
+```bash
 pip install -r requirements.txt
 ```
 
-If requirements.txt not available:
-
-```
+If `requirements.txt` is unavailable, install manually:
+```bash
 pip install mediapipe opencv-python torch numpy
 ```
 
 ---
 
-## 6. Training the Model
+## Training the Model
 
-### Landmark dataset required
+The dataset uses `.npy` landmark files, organized one folder per class.
 
-* Each class has its own folder
-* Each sample is a `.npy` file
-
-### Train command
-
-```
+Run the training script:
+```bash
 python -m scripts.train_static --landmark_dir dataset/landmarks
 ```
 
-After training, model will be saved as:
-
+The trained model will be saved to:
 ```
 models/static_mlp.pt
 ```
 
 ---
 
-## 7. Running Real-Time Inference (Laptop Webcam)
+## Running the App
 
-### Command
+### Laptop Webcam (Default)
 
-```
+```bash
 python -m scripts.infer_realtime
 ```
 
-This will:
-
-* Open default webcam
-* Detect hands
-* Show predicted sign on screen
+This opens your default webcam, detects hand landmarks, and displays the predicted sign in real time.
 
 ---
 
-## 8. Using Mobile Camera with DroidCam (IMPORTANT)
+## Using Mobile Camera (DroidCam)
 
-### Step 1: Install DroidCam
+You can use your Android phone as a webcam using **DroidCam**.
 
-* Install **DroidCam Client** on PC
-* Install **DroidCam App** on Android phone
+### Step 1 — Install DroidCam
 
-Download PC client:
-[https://www.dev47apps.com/droidcam/windows/](https://www.dev47apps.com/droidcam/windows/)
+- **PC Client:** https://www.dev47apps.com/droidcam/windows/
+- **Android App:** Available on the Google Play Store
 
----
+### Step 2 — Connect Phone and Laptop
 
-### Step 2: Connect Phone and Laptop
+- Ensure both devices are on the **same Wi-Fi network**
+- Open the DroidCam app on your phone to see your **Device IP** and **Port** (e.g., `192.168.1.6:4747`)
 
-Make sure:
+### Step 3 — Start DroidCam on PC
 
-* Phone and laptop are on **same Wi-Fi network**
+- Open **DroidCam Client**
+- Enter the phone IP and click **Start**
 
-Open DroidCam app on phone → you will see:
+### Step 4 — Run Inference with DroidCam
 
-* Device IP (example: 192.168.1.6)
-* Port (example: 4747)
-
----
-
-### Step 3: Start DroidCam Server
-
-On PC:
-
-* Open **DroidCam Client**
-* Enter phone IP
-* Click **Start**
-
----
-
-### Step 4: Run ASL Model with DroidCam
-
-Use this command:
-
-```
+```bash
 python -m scripts.infer_realtime --cam_url http://<PHONE_IP>:4747/video
 ```
 
-Example:
-
-```
+**Example:**
+```bash
 python -m scripts.infer_realtime --cam_url http://192.168.1.6:4747/video
 ```
 
 ---
 
-## 9. Common Errors & Fixes
+## Deployment Options
 
-### Error: ModuleNotFoundError: No module named 'scripts'
+### Option 1 — Desktop Executable
 
-✔ Always run using `-m` from project root
-
-### Error: Camera failed to open
-
-✔ Check DroidCam running
-✔ Check correct IP
-✔ Test URL in browser
-
-### Error: Python not found
-
-✔ Disable App Execution Aliases
-✔ Add Python to PATH
-
----
-
-## 10. Deployment Options
-
-### Option 1: Desktop Executable (Recommended)
-
-```
+Package the app into a standalone `.exe` using PyInstaller:
+```bash
 pip install pyinstaller
 pyinstaller --onefile scripts/infer_realtime.py
 ```
 
-Output:
-
+Output will be at:
 ```
 dist/infer_realtime.exe
 ```
 
----
+### Option 2 — Local Web App
 
-### Option 2: Local Web App
-
-* Flask backend
-* Browser-based demo
+Wrap the inference script in a **Flask** backend to serve a browser-based demo.
 
 ---
 
-## 11. Final Notes
+## Troubleshooting
 
-* This system runs fully offline
-* No GPU required
-* Real-time performance on CPU
-* Suitable for academic projects and demos
-
----
-
-## 12. Author
-
-**ASL Sign Language Recognition Project**
-Developed for academic and research purposes
+| Error | Fix |
+|-------|-----|
+| `ModuleNotFoundError: No module named 'scripts'` | Always run commands using `-m` from the project root |
+| Camera failed to open | Ensure DroidCam is running; verify the IP and test the URL in a browser |
+| `Python not found` | Disable App Execution Aliases in Windows settings and add Python to PATH |
 
 ---
 
-If you face any issue, re-check commands and environment setup carefully.
+## Authors
+
+Developed by **Riddhi** and **Shorya** for academic and research purposes.
+
+---
+
+> 💡 *If you encounter any issues, double-check your environment setup and ensure commands are run from the project root directory.*
