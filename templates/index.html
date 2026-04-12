@@ -62,8 +62,8 @@
                     startBtn.innerText = "Stop Camera";
                     isPredicting = true;
                     
-                    // Har 600ms me frame bhejo (taki model pe load na aaye)
-                    predictionInterval = setInterval(sendFrame, 600);
+                    // 🛠️ Yahan interval 1500ms kar diya gaya hai server pe load kam karne ke liye
+                    predictionInterval = setInterval(sendFrame, 1500);
                 } catch (err) {
                     alert("Camera access denied or not found!");
                 }
@@ -88,10 +88,18 @@
         async function sendFrame() {
             if(video.videoWidth === 0) return;
             
-            canvas.width = video.videoWidth;
-            canvas.height = video.videoHeight;
-            ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
-            const dataURL = canvas.toDataURL('image/jpeg', 0.8);
+            // 🛠️ BADA FIX: Image ko chhota kar rahe hain (Resize to 320x240)
+            const targetWidth = 320; 
+            const targetHeight = 240;
+            
+            canvas.width = targetWidth;
+            canvas.height = targetHeight;
+            
+            // HD video ko chhote canvas me draw kar rahe hain
+            ctx.drawImage(video, 0, 0, targetWidth, targetHeight);
+            
+            // 🛠️ Quality ko 0.8 se gira kar 0.5 kar diya (Size aur bhi chhota hoga)
+            const dataURL = canvas.toDataURL('image/jpeg', 0.5);
 
             try {
                 const response = await fetch('/predict', {
