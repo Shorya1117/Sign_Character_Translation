@@ -1,10 +1,10 @@
+numpy
+opencv-python-headless
+mediapipe
+torch
 torchvision
 tqdm
 scikit-learn
 matplotlib
-Flask
-torch
-numpy
-opencv-python-headless
-mediapipe
+flask
 gunicorn
